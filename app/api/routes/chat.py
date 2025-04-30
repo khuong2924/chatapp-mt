@@ -9,7 +9,7 @@ from app.schemas.chat import (
 from app.schemas.message import MessageResponse
 from app.services.chat_service import ChatService
 from typing import List, Optional
-from app.api.deps import get_chat_service_dependency, get_current_user_id # Bỏ get_conversation_owner nếu không dùng
+from app.api.deps import get_chat_service_dependency, get_current_user_id 
 import uuid
 import logging
 
