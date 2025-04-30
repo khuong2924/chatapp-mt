@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Service cho ứng dụng FastAPI
+  app:
+    build: . # Build image từ Dockerfile trong thư mục hiện tại
+    container_name: chatbot_backend_app
+    ports:
+      - "8000:8000" # Map port 8000 của host vào port 8000 của container
+    volumes:
+      - ./app:/app/app # Mount code từ host vào container để reload hoạt động (chỉ cho dev)
+    environment:
+      # Truyền biến môi trường vào container
+      # Lấy giá trị từ file .env trên máy host (Docker Compose tự động đọc .env)
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - MONGODB_URI=mongodb://mongo:27017 # Kết nối đến service 'mongo' trong cùng network
+      - MONGODB_DB_NAME=${MONGODB_DB_NAME:-chatbot_db} # Dùng giá trị từ .env hoặc mặc định
+      # Thêm các biến môi trường khác nếu cần
+    depends_on:
+      - mongo # Khởi động service 'mongo' trước khi khởi động 'app'
+    networks:
+      - chatbot_network # Sử dụng network đã định nghĩa
+
+  # Service cho MongoDB
+  mongo:
+    image: mongo:latest # Sử dụng image MongoDB chính thức
+    container_name: chatbot_mongodb
+    ports:
+      - "27017:27017" # Map port MongoDB để có thể truy cập từ host (tùy chọn)
+    volumes:
+      - mongo_data:/data/db # Mount volume để lưu trữ dữ liệu MongoDB persistent
+    environment:
+      # Có thể cấu hình user/password cho MongoDB ở đây nếu muốn bảo mật hơn
+      # - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      # - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASS}
+      - MONGO_INITDB_DATABASE=${MONGODB_DB_NAME:-chatbot_db} # Tự động tạo DB này khi khởi tạo
+    networks:
+      - chatbot_network # Sử dụng network đã định nghĩa
+
+# Định nghĩa network để các container có thể giao tiếp qua tên service
+networks:
+  chatbot_network:
+    driver: bridge
+
+# Định nghĩa volume để lưu trữ dữ liệu MongoDB
+volumes:
+  mongo_data:
+    driver: local
